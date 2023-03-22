@@ -26,17 +26,4 @@ func ConnectToDatabase() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// create table
-	createTableQuery := `
-        CREATE TABLE IF NOT EXISTS students (
-            id SERIAL PRIMARY KEY,
-            name TEXT NOT NULL,
-            roll_number TEXT NOT NULL UNIQUE
-        );
-    `
-	_, err = DB.Exec(createTableQuery)
-	if err != nil {
-		log.Fatal(err)
-	}
 }
