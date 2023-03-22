@@ -20,7 +20,11 @@ func UpdateByRollNumber(rollNumber string, student models.Student) *models.Stude
 		log.Fatal(err)
 		return nil
 	}
-	student = *GetStudentByRollNumber(rollNumber)
+	m := GetStudentByRollNumber(rollNumber)
+	if m == nil {
+		return nil
+	}
+	student = *m
 	affected, err := result.RowsAffected()
 	if affected != 1 {
 		log.Fatalf("expected to affect 1 row, but affected %d", affected)
