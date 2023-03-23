@@ -3,11 +3,12 @@ package database
 import (
 	"fmt"
 	"log"
+	"strings"
 	"student-crud/models"
 )
 
 func Insert(student models.Student) *models.Student {
-	err := DB.QueryRow("INSERT INTO students (name, roll_number) VALUES ($1, $2) RETURNING id, name, roll_number", student.Name, student.RollNumber).Scan(&student.Id, &student.Name, &student.RollNumber)
+	err := DB.QueryRow("INSERT INTO students (name, roll_number) VALUES ($1, $2) RETURNING id, name, roll_number", student.Name, strings.ToUpper(student.RollNumber)).Scan(&student.Id, &student.Name, &student.RollNumber)
 	if err != nil {
 		return nil
 	}
@@ -15,7 +16,7 @@ func Insert(student models.Student) *models.Student {
 }
 
 func UpdateByRollNumber(rollNumber string, student models.Student) *models.Student {
-	result, err := DB.Exec("UPDATE students set name=$1 where roll_number=$2", student.Name, rollNumber)
+	result, err := DB.Exec("UPDATE students set name=$1 where roll_number=$2", student.Name, strings.ToUpper(rollNumber))
 	if err != nil {
 		log.Fatal(err)
 		return nil
@@ -35,11 +36,11 @@ func UpdateByRollNumber(rollNumber string, student models.Student) *models.Stude
 
 func DeleteByRollNumber(rollNumber string) (bool, *models.Student) {
 	stmt, err := DB.Prepare("DELETE FROM students WHERE roll_number=$1")
-	student := GetStudentByRollNumber(rollNumber)
+	student := GetStudentByRollNumber(strings.ToUpper(rollNumber))
 	if err != nil || student == nil {
 		return false, nil
 	}
-	result, err := stmt.Exec(rollNumber)
+	result, err := stmt.Exec(strings.ToUpper(rollNumber))
 	if err != nil {
 		return false, nil
 	}
@@ -54,7 +55,7 @@ func DeleteByRollNumber(rollNumber string) (bool, *models.Student) {
 func GetStudentByRollNumber(rollNumber string) *models.Student {
 	stmt, err := DB.Prepare("SELECT * FROM students where roll_number=$1")
 	defer stmt.Close()
-	query, err := stmt.Query(rollNumber)
+	query, err := stmt.Query(strings.ToUpper(rollNumber))
 	defer query.Close()
 	if err != nil {
 		return nil

@@ -47,20 +47,20 @@ func UpdateStudent(context *gin.Context) {
 	if student == nil {
 		return
 	}
-	student = database.UpdateByRollNumber(student.RollNumber, *student)
-	if student == nil {
+	updateStudent := database.UpdateByRollNumber(student.RollNumber, *student)
+	if updateStudent == nil {
 		sendJson(context.Writer, http.StatusNotFound, toJson(gin.H{
 			"error": "unable to find the record for the given RollNumber '" + student.RollNumber + "'",
 		}))
 		return
 	}
-	sendJson(context.Writer, http.StatusOK, toJson(student))
+	sendJson(context.Writer, http.StatusOK, toJson(updateStudent))
 }
 
 func getStudentDetails(context *gin.Context) *models.Student {
 	student := models.Student{}
 	err := context.BindJSON(&student)
-	if err != nil {
+	if err != nil || student.Name == "" || student.RollNumber == "" {
 		fmt.Println(err)
 		sendJson(context.Writer, http.StatusBadRequest, toJson(gin.H{
 			"error": "Please send the body for the request, which must contains 'Name' and 'RollNumber'",
