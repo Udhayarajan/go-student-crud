@@ -3,7 +3,6 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -18,6 +17,8 @@ var validate *validator.Validate
 var rollNumberRegex = regexp.MustCompile("^[0-9]{2}[A-Za-z][0-9]{3}")
 
 var trans ut.Translator
+
+type H map[string]any
 
 func InitValidator() {
 	validate = validator.New()
@@ -46,66 +47,66 @@ func InitValidator() {
 
 }
 
-func GetStudents(context *gin.Context) {
+func GetStudents(writer http.ResponseWriter, request *http.Request) {
 	students := database.GetAllStudents()
 	fmt.Println(students)
-	sendJson(context.Writer, http.StatusOK, toJson(students))
+	sendJson(writer, http.StatusOK, toJson(students))
 }
 
-func AddStudent(context *gin.Context) {
-	student := getStudentDetails(context)
+func AddStudent(writer http.ResponseWriter, request *http.Request) {
+	student := getStudentDetails(writer, request)
 	if student == nil {
 		return
 	}
 	student = database.Insert(*student)
-	sendJson(context.Writer, http.StatusCreated, toJson(student))
+	sendJson(writer, http.StatusCreated, toJson(student))
 }
 
-func DeleteStudent(context *gin.Context) {
-	var rollNum, has = context.GetQuery("RollNumber")
-	if !has {
-		sendJson(context.Writer, http.StatusBadRequest, toJson(gin.H{
+func DeleteStudent(writer http.ResponseWriter, request *http.Request) {
+	var rollNum = request.URL.Query().Get("RollNumber")
+	if rollNum == "" {
+		sendJson(writer, http.StatusBadRequest, toJson(H{
 			"error": "Invalid query. The query must contain 'RollNumber' which needed to be deleted",
 		}))
 		return
 	}
 	if !rollNumberRegex.MatchString(rollNum) {
-		sendJson(context.Writer, http.StatusBadRequest, toJson(gin.H{
+		sendJson(writer, http.StatusBadRequest, toJson(H{
 			"error": "Roll Number must be a valid roll number like 20PXXX",
 		}))
 		return
 	}
 	_, student := database.DeleteByRollNumber(rollNum)
 	if student == nil {
-		sendJson(context.Writer, http.StatusNotFound, toJson(gin.H{
+		sendJson(writer, http.StatusNotFound, toJson(H{
 			"error": "unable to find the record for the given RollNumber '" + rollNum + "'",
 		}))
 		return
 	}
-	sendJson(context.Writer, http.StatusOK, toJson(student))
+	sendJson(writer, http.StatusOK, toJson(student))
 }
 
-func UpdateStudent(context *gin.Context) {
-	student := getStudentDetails(context)
+func UpdateStudent(writer http.ResponseWriter, request *http.Request) {
+	student := getStudentDetails(writer, request)
 	if student == nil {
 		return
 	}
 	updateStudent := database.UpdateByRollNumber(student.RollNumber, *student)
 	if updateStudent == nil {
-		sendJson(context.Writer, http.StatusNotFound, toJson(gin.H{
+		sendJson(writer, http.StatusNotFound, toJson(H{
 			"error": "unable to find the record for the given RollNumber '" + student.RollNumber + "'",
 		}))
 		return
 	}
-	sendJson(context.Writer, http.StatusOK, toJson(updateStudent))
+	sendJson(writer, http.StatusOK, toJson(updateStudent))
 }
 
-func getStudentDetails(context *gin.Context) *models.Student {
+func getStudentDetails(writer http.ResponseWriter, request *http.Request) *models.Student {
 	student := models.Student{}
-	err := context.BindJSON(&student)
+	err := json.NewDecoder(request.Body).Decode(&student)
 	if err != nil {
 		fmt.Println(err)
-		sendJson(context.Writer, http.StatusBadRequest, toJson(gin.H{
+		sendJson(writer, http.StatusBadRequest, toJson(H{
 			"error": "Please send the body for the request, which must contains 'Name' and 'RollNumber'",
 		}))
 		return nil
@@ -115,7 +116,7 @@ func getStudentDetails(context *gin.Context) *models.Student {
 	if err != nil {
 		if _, ok := err.(*validator.InvalidValidationError); ok {
 			fmt.Println(err)
-			sendJson(context.Writer, http.StatusBadRequest, toJson(gin.H{
+			sendJson(writer, http.StatusBadRequest, toJson(H{
 				"error": "Please send the body for the request, which must contains 'Name' and 'RollNumber'",
 			}))
 			return nil
@@ -126,7 +127,7 @@ func getStudentDetails(context *gin.Context) *models.Student {
 		}
 		var stringArray []string
 		_ = json.Unmarshal(toJson(validationResult), &stringArray)
-		sendJson(context.Writer, http.StatusBadRequest, toJson(gin.H{
+		sendJson(writer, http.StatusBadRequest, toJson(H{
 			"errors": stringArray,
 		}))
 		return nil
@@ -139,8 +140,8 @@ func toJson(obj any) []byte {
 	return marshal
 }
 
-func sendJson(writer gin.ResponseWriter, code int, json []byte) {
-	writer.WriteHeader(code)
+func sendJson(writer http.ResponseWriter, code int, json []byte) {
 	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(code)
 	writer.Write(json)
 }

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"net/http"
 	"student-crud/controller"
 	"student-crud/database"
 )
@@ -12,16 +12,16 @@ func init() {
 
 func main() {
 	controller.InitValidator()
-	r := gin.Default()
 
-	r.GET("/", controller.GetStudents)
+	http.HandleFunc("/", controller.GetStudents)
 
-	r.POST("/add", controller.AddStudent)
+	http.HandleFunc("/add", controller.AddStudent)
 
-	r.DELETE("/remove", controller.DeleteStudent)
+	http.HandleFunc("/remove", controller.DeleteStudent)
 
-	r.PUT("/update", controller.UpdateStudent)
-	err := r.Run()
+	http.HandleFunc("/update", controller.UpdateStudent)
+	err := http.ListenAndServe("localhost:8080", nil)
+
 	if err != nil {
 		return
 	}
