@@ -11,7 +11,9 @@ func init() {
 }
 
 func main() {
+	controller.InitValidator()
 	r := gin.Default()
+
 	r.GET("/", controller.GetStudents)
 
 	r.POST("/add", controller.AddStudent)
