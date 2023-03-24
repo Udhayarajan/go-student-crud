@@ -48,12 +48,18 @@ func InitValidator() {
 }
 
 func GetStudents(writer http.ResponseWriter, request *http.Request) {
+	if !validRequest(writer, request, http.MethodGet) {
+		return
+	}
 	students := database.GetAllStudents()
 	fmt.Println(students)
 	sendJson(writer, http.StatusOK, toJson(students))
 }
 
 func AddStudent(writer http.ResponseWriter, request *http.Request) {
+	if !validRequest(writer, request, http.MethodPost) {
+		return
+	}
 	student := getStudentDetails(writer, request)
 	if student == nil {
 		return
@@ -63,6 +69,9 @@ func AddStudent(writer http.ResponseWriter, request *http.Request) {
 }
 
 func DeleteStudent(writer http.ResponseWriter, request *http.Request) {
+	if !validRequest(writer, request, http.MethodDelete) {
+		return
+	}
 	var rollNum = request.URL.Query().Get("RollNumber")
 	if rollNum == "" {
 		sendJson(writer, http.StatusBadRequest, toJson(H{
@@ -87,6 +96,9 @@ func DeleteStudent(writer http.ResponseWriter, request *http.Request) {
 }
 
 func UpdateStudent(writer http.ResponseWriter, request *http.Request) {
+	if !validRequest(writer, request, http.MethodPut) {
+		return
+	}
 	student := getStudentDetails(writer, request)
 	if student == nil {
 		return
@@ -144,4 +156,14 @@ func sendJson(writer http.ResponseWriter, code int, json []byte) {
 	writer.Header().Set("Content-Type", "application/json")
 	writer.WriteHeader(code)
 	writer.Write(json)
+}
+
+func validRequest(writer http.ResponseWriter, request *http.Request, method string) bool {
+	if request.Method == method {
+		return true
+	}
+	sendJson(writer, http.StatusMethodNotAllowed, toJson(H{
+		"error": fmt.Sprintf("This endpoint must be called with METHOD `%s`", method),
+	}))
+	return false
 }
