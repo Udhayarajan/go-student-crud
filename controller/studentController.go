@@ -106,7 +106,7 @@ func UpdateStudent(writer http.ResponseWriter, request *http.Request) {
 	updateStudent := database.UpdateByRollNumber(student.RollNumber, *student)
 	if updateStudent == nil {
 		sendJson(writer, http.StatusNotFound, toJson(H{
-			"error": "unable to find the record for the given RollNumber '" + student.RollNumber + "'",
+			"error": fmt.Sprintf("unable to find the record for the given RollNumber '%s'", student.RollNumber),
 		}))
 		return
 	}
