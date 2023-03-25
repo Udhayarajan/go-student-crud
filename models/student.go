@@ -1,7 +1,5 @@
 package models
 
-import _ "regexp"
-
 type Student struct {
 	Id         int
 	Name       string `validate:"required"`
