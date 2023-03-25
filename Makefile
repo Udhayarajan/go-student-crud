@@ -1,5 +1,6 @@
+include .env
 migrateup:
-	migrate -path db/migration -database "postgresql://postgres:root@localhost:5432/StudentDB?sslmode=disable" -verbose up
+	migrate -path db/migration -database "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/StudentDB?sslmode=disable" -verbose up
 
 migratedown:
-	migrate -path db/migration -database "postgresql://postgres:root@localhost:5432/StudentDB?sslmode=disable" -verbose down
+	migrate -path db/migration -database "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/StudentDB?sslmode=disable" -verbose down
