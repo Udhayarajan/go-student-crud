@@ -34,7 +34,7 @@ func DeleteByRollNumber(rollNumber string) (*models.Student, error) {
 }
 
 func GetStudentByRollNumber(rollNumber string) (*models.Student, error) {
-	stmt, err := DB.Prepare("SELECT * FROM students where roll_number=$1")
+	stmt, err := DB.Prepare("SELECT id,name, roll_number FROM students where roll_number=$1")
 	defer stmt.Close()
 	query, err := stmt.Query(strings.ToUpper(rollNumber))
 	defer query.Close()
@@ -51,7 +51,7 @@ func GetStudentByRollNumber(rollNumber string) (*models.Student, error) {
 
 func GetAllStudents() ([]models.Student, error) {
 	var students []models.Student
-	query, err := DB.Query("SELECT * FROM students")
+	query, err := DB.Query("SELECT id,name, roll_number FROM students")
 	if err != nil {
 		return nil, err
 	}
