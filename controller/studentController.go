@@ -51,7 +51,11 @@ func GetStudents(writer http.ResponseWriter, request *http.Request) {
 	if !validRequest(writer, request, http.MethodGet) {
 		return
 	}
-	students := database.GetAllStudents()
+	students, err := database.GetAllStudents()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	fmt.Println(students)
 	sendJson(writer, http.StatusOK, toJson(students))
 }
@@ -64,7 +68,11 @@ func AddStudent(writer http.ResponseWriter, request *http.Request) {
 	if student == nil {
 		return
 	}
-	student = database.Insert(*student)
+	student, err := database.Insert(*student)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	sendJson(writer, http.StatusCreated, toJson(student))
 }
 
@@ -103,8 +111,9 @@ func UpdateStudent(writer http.ResponseWriter, request *http.Request) {
 	if student == nil {
 		return
 	}
-	updateStudent := database.UpdateByRollNumber(student.RollNumber, *student)
-	if updateStudent == nil {
+	updateStudent, err := database.UpdateByRollNumber(student.RollNumber, *student)
+	if err != nil {
+		fmt.Println(err)
 		sendJson(writer, http.StatusNotFound, toJson(H{
 			"error": fmt.Sprintf("unable to find the record for the given RollNumber '%s'", student.RollNumber),
 		}))

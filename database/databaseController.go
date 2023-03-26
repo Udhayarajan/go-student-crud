@@ -7,73 +7,53 @@ import (
 	"student-crud/models"
 )
 
-func Insert(student models.Student) *models.Student {
+func Insert(student models.Student) (*models.Student, error) {
 	err := DB.QueryRow("INSERT INTO students (name, roll_number) VALUES ($1, $2) RETURNING id, name, roll_number", student.Name, strings.ToUpper(student.RollNumber)).Scan(&student.Id, &student.Name, &student.RollNumber)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return &student
+	return &student, nil
 }
 
-func UpdateByRollNumber(rollNumber string, student models.Student) *models.Student {
-	result, err := DB.Exec("UPDATE students set name=$1 where roll_number=$2", student.Name, strings.ToUpper(rollNumber))
+func UpdateByRollNumber(rollNumber string, student models.Student) (*models.Student, error) {
+	err := DB.QueryRow("UPDATE students set name=$1 where roll_number=$2 RETURNING id", student.Name, strings.ToUpper(rollNumber)).Scan(student.Id)
 	if err != nil {
 		log.Fatal(err)
-		return nil
+		return nil, err
 	}
-	m := GetStudentByRollNumber(rollNumber)
-	if m == nil {
-		return nil
-	}
-	student = *m
-	affected, err := result.RowsAffected()
-	if affected != 1 {
-		log.Fatalf("expected to affect 1 row, but affected %d", affected)
-		return nil
-	}
-	return &student
+	return &student, nil
 }
 
-func DeleteByRollNumber(rollNumber string) (bool, *models.Student) {
-	stmt, err := DB.Prepare("DELETE FROM students WHERE roll_number=$1")
-	student := GetStudentByRollNumber(strings.ToUpper(rollNumber))
-	if err != nil || student == nil {
-		return false, nil
-	}
-	result, err := stmt.Exec(strings.ToUpper(rollNumber))
+func DeleteByRollNumber(rollNumber string) (*models.Student, error) {
+	student := models.Student{}
+	err := DB.QueryRow("DELETE FROM students WHERE roll_number=$1 RETURNING id,name,roll_number", strings.ToUpper(rollNumber)).Scan(student.Id, student.Name, student.RollNumber)
 	if err != nil {
-		return false, nil
+		return nil, err
 	}
-	affected, err := result.RowsAffected()
-	if affected != 1 {
-		log.Fatalf("expected to affect 1 row, but affected %d", affected)
-		return false, nil
-	}
-	return true, student
+	return &student, nil
 }
 
-func GetStudentByRollNumber(rollNumber string) *models.Student {
+func GetStudentByRollNumber(rollNumber string) (*models.Student, error) {
 	stmt, err := DB.Prepare("SELECT * FROM students where roll_number=$1")
 	defer stmt.Close()
 	query, err := stmt.Query(strings.ToUpper(rollNumber))
 	defer query.Close()
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	if query.Next() {
 		var student models.Student
 		query.Scan(&student.Id, &student.Name, &student.RollNumber)
-		return &student
+		return &student, nil
 	}
-	return nil
+	return nil, err
 }
 
-func GetAllStudents() []models.Student {
+func GetAllStudents() ([]models.Student, error) {
 	var students []models.Student
 	query, err := DB.Query("SELECT * FROM students")
-	defer query.Close()
 	if err != nil {
-		return students
+		return nil, err
 	}
 	for query.Next() {
 		var student models.Student
@@ -81,5 +61,5 @@ func GetAllStudents() []models.Student {
 		fmt.Println(student)
 		students = append(students, student)
 	}
-	return students
+	return students, nil
 }
