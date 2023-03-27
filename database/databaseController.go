@@ -16,7 +16,7 @@ func Insert(student models.Student) (*models.Student, error) {
 }
 
 func UpdateByRollNumber(rollNumber string, student models.Student) (*models.Student, error) {
-	err := DB.QueryRow("UPDATE students set name=$1 where roll_number=$2 RETURNING id", student.Name, strings.ToUpper(rollNumber)).Scan(student.Id)
+	err := DB.QueryRow("UPDATE students SET name=$1 WHERE roll_number=$2 RETURNING id", student.Name, strings.ToUpper(rollNumber)).Scan(student.Id)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
@@ -34,7 +34,7 @@ func DeleteByRollNumber(rollNumber string) (*models.Student, error) {
 }
 
 func GetStudentByRollNumber(rollNumber string) (*models.Student, error) {
-	stmt, err := DB.Prepare("SELECT id,name, roll_number FROM students where roll_number=$1")
+	stmt, err := DB.Prepare("SELECT id,name, roll_number FROM students WHERE roll_number=$1")
 	defer stmt.Close()
 	query, err := stmt.Query(strings.ToUpper(rollNumber))
 	defer query.Close()
