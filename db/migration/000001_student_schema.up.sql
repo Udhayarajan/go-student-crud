@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS students
 (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    roll_number TEXT NOT NULL UNIQUE
+    name VARCHAR(64) NOT NULL,
+    roll_number VARCHAR(6) NOT NULL UNIQUE
 );
