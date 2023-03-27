@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/go-playground/locales/en"
@@ -93,8 +94,8 @@ func DeleteStudent(writer http.ResponseWriter, request *http.Request) {
 		}))
 		return
 	}
-	_, student := database.DeleteByRollNumber(rollNum)
-	if student == nil {
+	student, err := database.DeleteByRollNumber(rollNum)
+	if err != nil && err == sql.ErrNoRows {
 		sendJson(writer, http.StatusNotFound, toJson(H{
 			"error": "unable to find the record for the given RollNumber '" + rollNum + "'",
 		}))
@@ -114,9 +115,11 @@ func UpdateStudent(writer http.ResponseWriter, request *http.Request) {
 	updateStudent, err := database.UpdateByRollNumber(student.RollNumber, *student)
 	if err != nil {
 		fmt.Println(err)
-		sendJson(writer, http.StatusNotFound, toJson(H{
-			"error": fmt.Sprintf("unable to find the record for the given RollNumber '%s'", student.RollNumber),
-		}))
+		if err == sql.ErrNoRows {
+			sendJson(writer, http.StatusNotFound, toJson(H{
+				"error": fmt.Sprintf("unable to find the record for the given RollNumber '%s'", student.RollNumber),
+			}))
+		}
 		return
 	}
 	sendJson(writer, http.StatusOK, toJson(updateStudent))
